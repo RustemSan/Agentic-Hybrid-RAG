@@ -47,9 +47,8 @@ def main():
             batch = []
             time.sleep(0.5)
 
-        if batch:
-            client.bulk_index(batch)
-
+    if batch:
+        client.bulk_index(batch)
 
     print("\nIngestion complete!")
 
