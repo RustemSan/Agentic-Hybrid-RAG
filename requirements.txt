@@ -3,3 +3,13 @@ lxml==6.0.2
 psycopg2-binary==2.9.11
 soupsieve==2.8.3
 typing_extensions==4.15.0
+
+# Database
+psycopg2-binary==2.9.11
+
+# Flow A: Elastic & API
+elasticsearch>=8.0.0,<9.0.0
+fastapi
+uvicorn
+datasets
+tqdm

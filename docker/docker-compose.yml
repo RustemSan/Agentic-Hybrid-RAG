@@ -24,9 +24,24 @@ services:
     networks:
       - so-network
 
+  elasticsearch:
+    image: elasticsearch:8.12.0
+    container_name: so-elastic
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false # turning off passwords for local dev
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    networks:
+      - so-network
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
 networks:
   so-network:
     driver: bridge
 
 volumes:
   postgres_data:
+  es_data:
