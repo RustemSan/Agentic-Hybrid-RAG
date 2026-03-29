@@ -28,6 +28,8 @@ def main():
         if i >= limit:
             break
 
+        if i == 0:
+            print(f"DEBUG: Available keys in row: {row.keys()}")
         # Mapping dataset fields to your team's Unified Schema
         doc = {
             "question_id": row.get("qid") or row.get("question_id"),

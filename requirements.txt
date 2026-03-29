@@ -13,3 +13,4 @@ fastapi
 uvicorn
 datasets
 tqdm
+pydantic-settings==2.13.1
