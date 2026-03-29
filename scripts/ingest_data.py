@@ -3,14 +3,33 @@ import os
 from datasets import load_dataset
 from tqdm import tqdm
 import time
-
+from app.core.config import settings
+from elasticsearch import exceptions
 # Adding the 'backend' folder to the path so we can import our SearchClient
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 from app.retrieval.search_client import SearchClient
 
 
+def wait_for_elastic(client, timeout=60):
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            if client.es.ping():
+                print("ElasticSearch is up and running!")
+                return True
+        except exceptions.ConnectionError:
+            pass
+        print("Waiting for ElasticSearch to wake up...")
+        time.sleep(5)
+    raise Exception("ElasticSearch is not responding after timeout")
+
+
 def main():
-    client = SearchClient()
+
+    print(f"Connecting to ElasticSearch at: {settings.ELASTICSEARCH_HOST}")
+
+    client = SearchClient(host=settings.ELASTICSEARCH_HOST)
+    wait_for_elastic(client)
 
     # 1. Initialize the index (deletes and recreates if needed is handled in client or manually)
     print("Initializing ElasticSearch Index")

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Query, HTTPException
 from app.retrieval.search_client import SearchClient
+from app.core.config import settings
 
 router = APIRouter()
 # Initializing the client. It will perform the health check we defined earlier.
-search_service = SearchClient()
+search_service = SearchClient(host=settings.ELASTICSEARCH_HOST)
 
 @router.get("/search")
 async def search_questions(

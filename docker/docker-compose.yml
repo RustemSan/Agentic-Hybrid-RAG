@@ -1,4 +1,18 @@
 services:
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: so-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ELASTICSEARCH_HOST=http://so-elastic:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - so-network
+
   postgres:
     image: postgres:16
     container_name: so-postgres
@@ -12,6 +26,22 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - so-network
+
+
+  ingest:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: so-ingest
+    environment:
+      - ELASTICSEARCH_HOST=http://so-elastic:9200
+      - PYTHONPATH=/app
+    command: python scripts/ingest_data.py
+    depends_on:
+      - elasticsearch
+    networks:
+      - so-network
+
 
   pgadmin:
     image: dpage/pgadmin4
@@ -37,6 +67,8 @@ services:
       - so-network
     volumes:
       - es_data:/usr/share/elasticsearch/data
+
+
 
 networks:
   so-network:
