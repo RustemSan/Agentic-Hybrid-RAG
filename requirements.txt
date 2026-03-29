@@ -14,3 +14,7 @@ uvicorn
 datasets
 tqdm
 pydantic-settings==2.13.1
+
+
+# Front
+streamlit==1.55.0

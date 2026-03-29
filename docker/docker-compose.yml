@@ -42,6 +42,18 @@ services:
     networks:
       - so-network
 
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: so-frontend
+    ports:
+      - "8501:8501"
+    networks:
+      - so-network
+    depends_on:
+      - backend
+
 
   pgadmin:
     image: dpage/pgadmin4
