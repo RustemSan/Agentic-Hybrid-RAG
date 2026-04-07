@@ -18,3 +18,10 @@ pydantic-settings==2.13.1
 
 # Front
 streamlit==1.55.0
+
+# Vector retrieval
+qdrant-client==1.9.1
+sentence-transformers==2.7.0
+transformers==4.41.2
+torch>=2.0.0
+numpy>=1.24.0
