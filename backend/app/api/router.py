@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Query, HTTPException
-from app.retrieval_service import RetrievalService
+from app.services.retrieval_service import RetrievalService
+from app.services.rag_service import RAGService
 from app.core.config import settings
+
 
 router = APIRouter()
 # Initializing the client. It will perform the health check we defined earlier.
 retrieval_service = RetrievalService()
+rag_service = RAGService(retrieval_service=retrieval_service)
 
 @router.get("/search")
 def search(
@@ -49,6 +52,51 @@ def search(
             status_code=500,
             detail=f"Unexpected server error: {str(e)}"
         )
+
+
+@router.get("/answer")
+def answer(
+    q: str = Query(..., min_length=1, description="User question"),
+    mode: str = Query(
+        default=settings.DEFAULT_RETRIEVAL_MODE,
+        description="Retrieval mode: bm25, vector, hybrid"
+    ),
+    limit: int = Query(
+        default=settings.GENERATION_TOP_K,
+        ge=1,
+        le=settings.MAX_TOP_K,
+        description="Number of retrieved documents to use for generation"
+    ),
+):
+    try:
+        result = rag_service.answer(
+            query=q,
+            mode=mode,
+            top_k=limit,
+        )
+
+        return {
+            "status": "success",
+            "meta": {
+                "query": result["query"],
+                "mode": result["mode"],
+                "retrieved_count": result["retrieved_count"],
+                "limit": limit,
+            },
+            "data": {
+                "answer": result["answer"],
+                "sources": result["sources"],
+            },
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected generation error: {str(e)}")
+
+
 
 
 @router.get("/search/modes")

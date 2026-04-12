@@ -34,6 +34,18 @@ class Settings(BaseSettings):
     DEFAULT_TOP_K: int = int(os.getenv("DEFAULT_TOP_K", 5))
     MAX_TOP_K: int = int(os.getenv("MAX_TOP_K", 20))
 
+
+    # =========================
+    # LLM / Generation settings
+    # =========================
+    LLM_API_URL: str = "http://127.0.0.1:1234/v1/chat/completions"
+    LLM_MODEL_NAME: str = "local-model"
+    LLM_API_KEY: str = "not-needed"
+    GENERATION_TOP_K: int = 4
+    GENERATION_MAX_TOKENS: int = 500
+    GENERATION_TEMPERATURE: float = 0.2
+    REQUEST_TIMEOUT_SEC: int = 120
+
     # =========================
     # CORS settings
     # =========================
