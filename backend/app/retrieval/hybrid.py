@@ -1,5 +1,5 @@
-from backend.app.retrieval.search_client import SearchClient
-from backend.app.retrieval.vector import VectorSearchClient
+from app.retrieval.search_client import SearchClient
+from app.retrieval.vector import VectorSearchClient
 
 
 class HybridSearchClient:
@@ -14,11 +14,11 @@ class HybridSearchClient:
         self.rrf_k = rrf_k
 
     def _doc_key(self, doc: dict):
-        """
-        Unique key for one retrieved document.
-        In your dataset one QA pair is best identified by question_id.
-        """
-        return doc.get("question_id")
+        question_id = doc.get("question_id")
+        answer_id = doc.get("answer_id")
+        if question_id is None:
+            return None
+        return f"{question_id}_{answer_id}" if answer_id is not None else str(question_id)
 
     def _rrf_score(self, rank: int) -> float:
         return 1.0 / (self.rrf_k + rank)
@@ -28,10 +28,10 @@ class HybridSearchClient:
         Run BM25 and Vector retrieval, then merge results using RRF.
         Returns results in the same unified retrieval schema.
         """
-        candidate_pool = max(top_k, 10)
+        candidate_pool = max(top_k * 2, 10)
 
-        bm25_results = self.bm25_client.search(query, top_k=candidate_pool)
-        vector_results = self.vector_client.search(query, top_k=candidate_pool)
+        bm25_results = self.bm25_client.search(query, top_k=candidate_pool) or []
+        vector_results = self.vector_client.search(query, top_k=candidate_pool) or []
 
         fused = {}
 
@@ -55,10 +55,16 @@ class HybridSearchClient:
                     "rank": None,
                     "bm25_score": None,
                     "vector_score": None,
+                    "found_in_bm25": False,
+                    "found_in_vector": False,
                 }
 
-            fused[key]["retrieval_score"] += self._rrf_score(doc["rank"])
+            rank = doc.get("rank")
+            if rank is None:
+                continue
+            fused[key]["retrieval_score"] += self._rrf_score(rank)
             fused[key]["bm25_score"] = doc.get("retrieval_score")
+            fused[key]["found_in_bm25"] = True
 
         # Add Vector results
         for doc in vector_results:
@@ -80,10 +86,13 @@ class HybridSearchClient:
                     "rank": None,
                     "bm25_score": None,
                     "vector_score": None,
+                    "found_in_bm25": False,
+                    "found_in_vector": False,
                 }
 
             fused[key]["retrieval_score"] += self._rrf_score(doc["rank"])
             fused[key]["vector_score"] = doc.get("retrieval_score")
+            fused[key]["found_in_vector"] = True
 
         # Sort by fused RRF score descending
         ranked_results = sorted(

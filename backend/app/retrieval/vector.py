@@ -21,16 +21,16 @@ class VectorSearchClient:
     def search(self, query: str, top_k: int = 5):
         query_vector = self.embed_query(query)
 
-        response = self.client.query_points(
+        response = self.client.search(
             collection_name=self.collection_name,
-            query=query_vector,
+            query_vector=query_vector,
             limit=top_k,
             with_payload=True
         )
 
         formatted_results = []
 
-        for i, hit in enumerate(response.points, start=1):
+        for i, hit in enumerate(response, start=1):
             payload = hit.payload or {}
 
             doc = {

@@ -4,15 +4,12 @@ from pathlib import Path
 import numpy as np
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
-
+from app.core.config import settings
 
 COLLECTION_NAME = "stackoverflow_vector"
 
 VECTORS_PATH = Path("data/processed/embeddings/vectors.npy")
 METADATA_PATH = Path("data/processed/embeddings/metadata.jsonl")
-
-QDRANT_HOST = "localhost"
-QDRANT_PORT = 6333
 
 BATCH_SIZE = 500
 
@@ -24,8 +21,19 @@ def load_metadata(path: Path) -> list[dict]:
             metadata.append(json.loads(line))
     return metadata
 
+def make_point_id(idx: int, meta: dict) -> int:
+    qid = meta.get("question_id", 0)
+    aid = meta.get("answer_id", 0)
+    return int(qid) * 10_000_000 + int(aid)
 
 def main():
+    collection_name = settings.QDRANT_COLLECTION
+    qdrant_host = settings.QDRANT_HOST
+    qdrant_port = settings.QDRANT_PORT
+
+    print(f"Connecting to Qdrant at {qdrant_host}:{qdrant_port}")
+    print(f"Using collection: {collection_name}")
+
     if not VECTORS_PATH.exists():
         raise FileNotFoundError(f"Vectors file not found: {VECTORS_PATH}")
 
@@ -42,27 +50,32 @@ def main():
 
     if len(vectors) != len(metadata):
         raise ValueError(
-            f"Mismatch: vectors={len(vectors)} metadata={len(metadata)}"
+            f"Mismatch between vectors and metadata: "
+            f"vectors={len(vectors)}, metadata={len(metadata)}"
         )
 
     vector_dim = int(vectors.shape[1])
 
-    client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, timeout=300)
+    client = QdrantClient(
+        host=qdrant_host,
+        port=qdrant_port,
+        timeout=300,
+    )
 
     print("Recreating collection...")
 
-    if client.collection_exists(COLLECTION_NAME):
-        client.delete_collection(COLLECTION_NAME)
+    if client.collection_exists(collection_name):
+        client.delete_collection(collection_name)
 
     client.create_collection(
-        collection_name=COLLECTION_NAME,
+        collection_name=collection_name,
         vectors_config=VectorParams(
             size=vector_dim,
             distance=Distance.COSINE,
         ),
     )
 
-    print(f"Collection '{COLLECTION_NAME}' recreated.")
+    print(f"Collection '{collection_name}' recreated.")
 
     points = []
     total_uploaded = 0
@@ -79,7 +92,7 @@ def main():
         }
 
         point = PointStruct(
-            id=idx,
+            id=make_point_id(idx, meta),
             vector=vector.tolist(),
             payload=payload,
         )
@@ -88,22 +101,25 @@ def main():
 
         if len(points) >= BATCH_SIZE:
             client.upsert(
-                collection_name=COLLECTION_NAME,
+                collection_name=collection_name,
                 points=points,
             )
             total_uploaded += len(points)
-            if total_uploaded % 10000 == 0:
-                print(f"Uploaded {total_uploaded} vectors...", flush=True)
+            print(f"Uploaded {total_uploaded}/{len(metadata)} vectors...", flush=True)
             points = []
 
     if points:
         client.upsert(
-            collection_name=COLLECTION_NAME,
+            collection_name=collection_name,
             points=points,
         )
         total_uploaded += len(points)
 
-    print(f"Done. Uploaded {total_uploaded} vectors to '{COLLECTION_NAME}'.")
+    print(f"Done. Uploaded {total_uploaded} vectors to '{collection_name}'.")
+
+    collection_info = client.get_collection(collection_name=collection_name)
+    print("Collection info:")
+    print(collection_info)
 
 
 if __name__ == "__main__":

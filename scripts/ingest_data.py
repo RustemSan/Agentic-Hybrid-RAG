@@ -28,7 +28,9 @@ def main():
 
     print(f"Connecting to ElasticSearch at: {settings.ELASTICSEARCH_HOST}")
 
-    client = SearchClient(host=settings.ELASTICSEARCH_HOST)
+    client = SearchClient(
+        host=settings.ELASTICSEARCH_HOST,
+        index_name=settings.INDEX_NAME,)
     wait_for_elastic(client)
 
     # 1. Initialize the index (deletes and recreates if needed is handled in client or manually)

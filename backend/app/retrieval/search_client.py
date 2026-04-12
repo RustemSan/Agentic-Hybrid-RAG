@@ -1,7 +1,7 @@
 from elasticsearch import Elasticsearch, helpers
 
 class SearchClient:
-    def __init__(self, host="http://localhost:9200"):
+    def __init__(self, host="http://localhost:9200", index_name="default"):
         "ElasticSearch connection to Docker"
         self.es = Elasticsearch(
             host,
@@ -9,7 +9,7 @@ class SearchClient:
             retry_on_timeout=True,
             max_retries=3
         )
-        self.index_name = "stackoverflow_bm25"
+        self.index_name = index_name
 
     def create_index(self):
         "Creating index with mapping for Comparison Format"

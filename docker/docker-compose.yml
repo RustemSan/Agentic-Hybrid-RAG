@@ -8,8 +8,15 @@ services:
       - "8000:8000"
     environment:
       - ELASTICSEARCH_HOST=http://so-elastic:9200
+      - INDEX_NAME=stackoverflow_bm25
+      - QDRANT_HOST=so-qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_COLLECTION=stackoverflow_vector
+      - EMBEDDING_MODEL_NAME=BAAI/bge-small-en-v1.5
+      - PYTHONPATH=/app
     depends_on:
       - elasticsearch
+      - qdrant
     networks:
       - so-network
 
@@ -35,10 +42,16 @@ services:
     container_name: so-ingest
     environment:
       - ELASTICSEARCH_HOST=http://so-elastic:9200
+      - INDEX_NAME=stackoverflow_bm25
+      - QDRANT_HOST=so-qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_COLLECTION=stackoverflow_vector
+      - EMBEDDING_MODEL_NAME=BAAI/bge-small-en-v1.5
       - PYTHONPATH=/app
     command: python scripts/ingest_data.py
     depends_on:
       - elasticsearch
+      - qdrant
     networks:
       - so-network
 
@@ -67,7 +80,7 @@ services:
       - so-network
 
   elasticsearch:
-    image: elasticsearch:8.12.0
+    image:  docker.elastic.co/elasticsearch/elasticsearch:8.12.0
     container_name: so-elastic
     environment:
       - discovery.type=single-node
@@ -80,7 +93,16 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
-
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: so-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - so-network
 
 networks:
   so-network:
@@ -89,3 +111,4 @@ networks:
 volumes:
   postgres_data:
   es_data:
+  qdrant_data:
