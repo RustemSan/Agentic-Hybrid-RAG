@@ -2,19 +2,17 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-import requests
+from openai import OpenAI
 
 from app.core.config import settings
 
 
 class GeneratorService:
     def __init__(self) -> None:
-        self.api_url = settings.LLM_API_URL
-        self.model_name = settings.LLM_MODEL_NAME
-        self.api_key = settings.LLM_API_KEY
-        self.max_tokens = settings.GENERATION_MAX_TOKENS
+        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        self.model_name = settings.OPENAI_MODEL
+        self.max_output_tokens = settings.GENERATION_MAX_OUTPUT_TOKENS
         self.temperature = settings.GENERATION_TEMPERATURE
-        self.timeout = settings.REQUEST_TIMEOUT_SEC
 
     def build_context(self, documents: List[Dict[str, Any]]) -> str:
         context_blocks = []
@@ -33,51 +31,35 @@ class GeneratorService:
 
         return "\n\n".join(context_blocks)
 
-    def build_messages(self, query: str, context: str) -> List[Dict[str, str]]:
+    def build_input(self, query: str, context: str) -> str:
         system_prompt = (
             "You are a retrieval-grounded technical assistant. "
             "Answer only using the provided context. "
-            "If the context is insufficient, say that the available documents are insufficient. "
-            "Be precise and concise. "
-            "When possible, synthesize the answer rather than copying text."
+            "If the context is insufficient, clearly say that the available documents are insufficient. "
+            "Be precise, concise, and technically correct. "
+            "Do not invent facts outside the retrieved documents."
         )
 
         user_prompt = (
             f"User question:\n{query}\n\n"
             f"Retrieved context:\n{context}\n\n"
-            "Write a helpful technical answer grounded in the retrieved documents."
+            "Write a grounded technical answer based only on the retrieved context."
         )
 
-        return [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ]
+        return f"{system_prompt}\n\n{user_prompt}"
 
     def generate(self, query: str, documents: List[Dict[str, Any]]) -> str:
+        if not documents:
+            return "The available documents are insufficient to answer the question."
+
         context = self.build_context(documents)
-        messages = self.build_messages(query=query, context=context)
+        full_input = self.build_input(query=query, context=context)
 
-        headers = {
-            "Content-Type": "application/json",
-        }
-
-        if self.api_key and self.api_key != "not-needed":
-            headers["Authorization"] = f"Bearer {self.api_key}"
-
-        payload = {
-            "model": self.model_name,
-            "messages": messages,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-        }
-
-        response = requests.post(
-            self.api_url,
-            json=payload,
-            headers=headers,
-            timeout=self.timeout,
+        response = self.client.responses.create(
+            model=self.model_name,
+            input=full_input,
+            temperature=self.temperature,
+            max_output_tokens=self.max_output_tokens,
         )
-        response.raise_for_status()
 
-        data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
+        return response.output_text.strip()
