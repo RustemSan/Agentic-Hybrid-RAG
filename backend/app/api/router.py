@@ -67,19 +67,26 @@ def answer(
         le=settings.MAX_TOP_K,
         description="Number of retrieved documents to use for generation"
     ),
+        use_agent: bool = Query(default=False),
+        use_rewriter: bool = Query(default=False),
 ):
     try:
         result = rag_service.answer(
             query=q,
             mode=mode,
             top_k=limit,
+            use_agent=use_agent,
+            use_rewriter=use_rewriter,
         )
 
         return {
             "status": "success",
             "meta": {
                 "query": result["query"],
+                "rewritten_query": result["rewritten_query"],
                 "mode": result["mode"],
+                "agent_used": result["agent_used"],
+                "rewriter_used": result["rewriter_used"],
                 "retrieved_count": result["retrieved_count"],
                 "limit": limit,
             },
@@ -94,6 +101,8 @@ def answer(
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Unexpected generation error: {str(e)}")
 
 

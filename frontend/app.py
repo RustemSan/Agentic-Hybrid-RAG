@@ -26,11 +26,11 @@ def run_search(query: str, mode: str, limit: int) -> Dict[str, Any]:
     return response.json()
 
 
-def run_answer(query: str, mode: str, limit: int) -> Dict[str, Any]:
+def run_answer(query: str, mode: str, limit: int, use_agent: bool, use_rewriter) -> Dict[str, Any]:
     url = f"{BACKEND_URL}/api/v1/answer"
     response = requests.get(
         url,
-        params={"q": query, "mode": mode, "limit": limit},
+        params={"q": query, "mode": mode, "limit": limit, "use_agent": use_agent, "use_rewriter": use_rewriter},
         timeout=120,
     )
     response.raise_for_status()
@@ -161,15 +161,26 @@ def render_answer_results(payload: Dict[str, Any], latency: float) -> None:
     answer = data.get("answer", "")
     sources = data.get("sources", [])
 
+    # agent fields
+    agent_used = meta.get("agent_used", False)
+    final_mode = meta.get("mode", "—")
+
+    rewritten = meta.get("rewritten_query", "")
+    rewriter_used = meta.get("rewriter_used", False)
+
     st.markdown("## Expert Answer")
 
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Mode", str(meta.get("mode", "—")).upper())
-    m2.metric("Sources used", len(sources))
-    m3.metric("Limit", meta.get("limit", "—"))
-    m4.metric("Latency", f"{latency:.2f}s")
+    m1, m2, m3, m4, m5 = st.columns(5)
+    m1.metric("Mode", final_mode)
+    m2.metric("Agent used", "YES" if agent_used else "NO")
+    m3.metric("Sources used", len(sources))
+    m4.metric("Limit", meta.get("limit", "—"))
+    m5.metric("Latency", f"{latency:.2f}s")
 
-    st.caption(f"Query: {meta.get('query', '—')}")
+    if rewriter_used and rewritten != meta.get("query"):
+        st.caption(f"Original: {meta.get('query')}  →  Rewritten: **{rewritten}**")
+    else:
+        st.caption(f"Query: {meta.get('query', '—')}")
 
     with st.container(border=True):
         st.markdown("### Generated Answer")
@@ -194,6 +205,9 @@ def main() -> None:
     with st.sidebar:
         st.header("Configuration")
         mode = st.selectbox("Retrieval mode", ["bm25", "vector", "hybrid"], index=2)
+        use_agent = st.checkbox("Use Agent Router", value=False)
+        use_rewriter = st.checkbox("Use Query Rewriter", value=False)
+
         limit = st.slider("Top-k documents", min_value=1, max_value=10, value=4)
         st.markdown("---")
         st.write(f"**Backend:** `{BACKEND_URL}`")
@@ -247,7 +261,7 @@ def main() -> None:
             else:
                 try:
                     start = time.time()
-                    payload = run_answer(query=query.strip(), mode=mode, limit=limit)
+                    payload = run_answer(query=query.strip(), mode=mode, limit=limit, use_agent=use_agent, use_rewriter=use_rewriter)
                     latency = time.time() - start
 
                     st.session_state["last_answer_payload"] = payload
