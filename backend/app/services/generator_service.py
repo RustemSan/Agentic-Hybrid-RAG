@@ -1,13 +1,30 @@
+"""
+generator_service.py — LLM-based answer generation over retrieved documents.
+
+Takes a user query and a list of retrieved documents, builds a structured
+prompt with the documents as context, and calls the OpenAI API to produce
+a grounded technical answer.
+
+The LLM is instructed to answer only from the provided context and to
+explicitly say when context is insufficient — this prevents hallucination.
+"""
+
 from __future__ import annotations
-
 from typing import Any, Dict, List
-
 from openai import OpenAI
-
 from app.core.config import settings
 
 
 class GeneratorService:
+    """
+        Wraps OpenAI API calls for answer generation in the RAG pipeline.
+
+        Responsibilities:
+          - Format retrieved documents into a structured context block
+          - Build a prompt combining the user query and context
+          - Call the OpenAI Responses API and return the generated text
+        """
+
     def __init__(self) -> None:
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.model_name = settings.OPENAI_MODEL

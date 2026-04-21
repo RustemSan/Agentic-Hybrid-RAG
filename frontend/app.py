@@ -1,3 +1,19 @@
+"""
+app.py — Streamlit frontend for the Agentic Hybrid RAG system.
+
+Provides a web UI with three tabs:
+  - Search:        Raw document retrieval (no generation), shows ranked results
+  - Expert Answer: Full RAG pipeline with optional agents, shows answer + sources
+  - System:        Backend health check and pipeline overview
+
+Configuration (retrieval mode, agents, top-k) is managed via the sidebar.
+Results are stored in session_state so they persist across Streamlit reruns
+(Streamlit reruns the entire script on every user interaction).
+
+Backend communication is via HTTP GET requests to the FastAPI server.
+BACKEND_URL defaults to localhost but can be overridden via environment variable.
+"""
+
 import os
 import time
 from typing import Any, Dict, List, Optional
@@ -12,10 +28,18 @@ st.set_page_config(
     layout="wide",
 )
 
+# Read backend URL from environment so the same image works in Docker or locally
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
+# ---------------------------------------------------------------------------
+# API call functions
+# Each function maps 1:1 to one backend endpoint.
+# raise_for_status() converts HTTP error codes (4xx, 5xx) into Python exceptions
+# so the caller can catch them and show an st.error() message.
+# ---------------------------------------------------------------------------
 
 def run_search(query: str, mode: str, limit: int) -> Dict[str, Any]:
+    """Call /api/v1/search — retrieval only, no generation."""
     url = f"{BACKEND_URL}/api/v1/search"
     response = requests.get(
         url,
@@ -27,24 +51,36 @@ def run_search(query: str, mode: str, limit: int) -> Dict[str, Any]:
 
 
 def run_answer(query: str, mode: str, limit: int, use_agent: bool, use_rewriter) -> Dict[str, Any]:
+    """Call /api/v1/answer — full RAG pipeline with optional agents."""
     url = f"{BACKEND_URL}/api/v1/answer"
     response = requests.get(
         url,
         params={"q": query, "mode": mode, "limit": limit, "use_agent": use_agent, "use_rewriter": use_rewriter},
-        timeout=120,
+        timeout=120, # longer timeout: generation can take several seconds
     )
     response.raise_for_status()
     return response.json()
 
 
 def run_health() -> Dict[str, Any]:
+    """Call /health — returns backend initialization state."""
     url = f"{BACKEND_URL}/health"
     response = requests.get(url, timeout=15)
     response.raise_for_status()
     return response.json()
 
+# ---------------------------------------------------------------------------
+# Utility helpers
+# ---------------------------------------------------------------------------
 
 def short_text(text: Optional[str], max_len: int = 220) -> str:
+    """
+      Truncate text to max_len characters for display in result cards.
+
+      Replaces newlines with spaces (keeps cards single-line) and appends
+      ellipsis when truncated so the user knows more content exists.
+      """
+
     if not text:
         return "—"
     text = text.strip().replace("\n", " ")
@@ -52,6 +88,14 @@ def short_text(text: Optional[str], max_len: int = 220) -> str:
 
 
 def init_state() -> None:
+    """
+       Initialize session_state keys on first run.
+
+       Streamlit reruns the entire script on every interaction, so session_state
+       is used to persist data between reruns. Keys are only set if not already
+       present — this avoids overwriting results on subsequent reruns.
+       """
+
     defaults = {
         "last_search_payload": None,
         "last_search_latency": None,
@@ -64,13 +108,27 @@ def init_state() -> None:
 
 
 def clear_results() -> None:
+    """Reset all cached results in session_state."""
     st.session_state["last_search_payload"] = None
     st.session_state["last_search_latency"] = None
     st.session_state["last_answer_payload"] = None
     st.session_state["last_answer_latency"] = None
 
+# ---------------------------------------------------------------------------
+# Rendering components
+# ---------------------------------------------------------------------------
 
 def render_result_card(idx: int, result: Dict[str, Any]) -> None:
+    """
+        Render a single retrieved document as a bordered card.
+
+        Shows title, retrieval metadata (method, rank, score), document IDs,
+        tags, and truncated question/answer previews. For hybrid results,
+        also shows per-system debug scores (BM25 raw score, vector similarity,
+        and which systems returned the document).
+
+        Full text is available via an expander to avoid cluttering the view.
+        """
     title = result.get("title") or "Untitled"
     score = result.get("retrieval_score")
     method = result.get("retrieval_method", "unknown")
@@ -103,6 +161,8 @@ def render_result_card(idx: int, result: Dict[str, Any]) -> None:
         with meta3:
             st.write(f"**Tags:** {', '.join(tags) if tags else '—'}")
 
+        # Hybrid-only debug section: shows raw scores from each sub-system
+        # and which systems contributed this document to the fused ranking
         if method == "hybrid":
             st.markdown("#### Hybrid debug")
             d1, d2, d3, d4 = st.columns(4)
@@ -121,6 +181,7 @@ def render_result_card(idx: int, result: Dict[str, Any]) -> None:
             st.markdown("#### Answer")
             st.write(short_text(answer_body, 700))
 
+        # Full text hidden by default — expander keeps the page scannable
         with st.expander("Show full source document"):
             st.markdown("##### Full Question")
             st.write(question_text)
@@ -134,6 +195,13 @@ def render_result_card(idx: int, result: Dict[str, Any]) -> None:
 
 
 def render_search_results(payload: Dict[str, Any], latency: float) -> None:
+    """
+       Render the response from /api/v1/search.
+
+       Shows summary metrics (mode, count, limit, latency) and renders
+       one result card per retrieved document.
+       """
+
     results = payload.get("data", [])
     meta = payload.get("meta", {})
 
@@ -156,12 +224,22 @@ def render_search_results(payload: Dict[str, Any], latency: float) -> None:
 
 
 def render_answer_results(payload: Dict[str, Any], latency: float) -> None:
+    """
+       Render the response from /api/v1/answer.
+
+       Shows agent metadata (which agents ran, selected mode), the generated
+       answer, and source documents used for grounding.
+
+       If the Query Rewriter was used and actually changed the query,
+       shows the original → rewritten transformation so the user can see
+       what was sent to retrieval.
+       """
     meta = payload.get("meta", {})
     data = payload.get("data", {})
     answer = data.get("answer", "")
     sources = data.get("sources", [])
 
-    # agent fields
+    # Agent metadata lives in meta (set by the backend router)
     agent_used = meta.get("agent_used", False)
     final_mode = meta.get("mode", "—")
 
@@ -177,6 +255,7 @@ def render_answer_results(payload: Dict[str, Any], latency: float) -> None:
     m4.metric("Limit", meta.get("limit", "—"))
     m5.metric("Latency", f"{latency:.2f}s")
 
+    # Show rewrite only if rewriter ran AND actually changed the query
     if rewriter_used and rewritten != meta.get("query"):
         st.caption(f"Original: {meta.get('query')}  →  Rewritten: **{rewritten}**")
     else:
@@ -195,6 +274,9 @@ def render_answer_results(payload: Dict[str, Any], latency: float) -> None:
     for i, result in enumerate(sources, start=1):
         render_result_card(i, result)
 
+# ---------------------------------------------------------------------------
+# Main app layout
+# ---------------------------------------------------------------------------
 
 def main() -> None:
     init_state()
@@ -202,6 +284,8 @@ def main() -> None:
     st.title("🔎 Agentic Hybrid RAG")
     st.caption("Search technical documents or generate a grounded expert answer over StackOverflow Q&A.")
 
+    # Sidebar: all configuration controls
+    # mode is passed to the backend but ignored when use_agent=True
     with st.sidebar:
         st.header("Configuration")
         mode = st.selectbox("Retrieval mode", ["bm25", "vector", "hybrid"], index=2)
@@ -211,7 +295,7 @@ def main() -> None:
         limit = st.slider("Top-k documents", min_value=1, max_value=10, value=4)
         st.markdown("---")
         st.write(f"**Backend:** `{BACKEND_URL}`")
-        if st.button("Clear results", use_container_width=True):
+        if st.button("Clear results", use_container_width=True): # force immediate UI refresh after clearing
             clear_results()
             st.rerun()
 
@@ -229,6 +313,7 @@ def main() -> None:
 
     tab_search, tab_answer, tab_system = st.tabs(["Search", "Expert Answer", "System"])
 
+    # --- Tab 1: Raw retrieval ---
     with tab_search:
         run_retrieval = st.button("Retrieve documents", use_container_width=True)
 
@@ -252,6 +337,7 @@ def main() -> None:
                 st.session_state["last_search_latency"],
             )
 
+    # --- Tab 2: Full RAG (retrieval + generation + agents) ---
     with tab_answer:
         run_generation = st.button("Generate expert answer", use_container_width=True)
 
@@ -274,7 +360,8 @@ def main() -> None:
                 st.session_state["last_answer_payload"],
                 st.session_state["last_answer_latency"],
             )
-
+            
+    # --- Tab 3: System health and pipeline overview ---
     with tab_system:
         st.markdown("## System Status")
         c1, c2 = st.columns([1, 1])

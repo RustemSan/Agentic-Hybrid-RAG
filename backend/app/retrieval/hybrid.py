@@ -1,3 +1,22 @@
+"""
+hybrid.py — Hybrid retrieval via Reciprocal Rank Fusion (RRF).
+
+RRF is a rank-based fusion algorithm that combines results from multiple
+retrieval systems without needing to normalize their raw scores.
+
+Formula for each document d across retrieval systems:
+    RRF_score(d) = Σ 1 / (k + rank(d, system))
+
+where k (rrf_k) is a smoothing constant (default 60, standard in literature).
+Documents that rank well in both BM25 and vector search accumulate higher
+scores and rise to the top of the fused list.
+
+Why RRF instead of score normalization?
+  - BM25 and cosine similarity scores are on incompatible scales
+  - RRF only uses rank position, making it scale-agnostic and robust
+  - A document found only in one system still contributes its RRF score
+"""
+
 from app.retrieval.search_client import SearchClient
 from app.retrieval.vector import VectorSearchClient
 

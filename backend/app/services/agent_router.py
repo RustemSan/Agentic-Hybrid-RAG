@@ -1,3 +1,14 @@
+"""
+agent_router.py — LLM-based retrieval mode selector.
+
+This agent decides which retrieval backend to use for a given query
+by asking the LLM to classify the query type. This removes the need
+for the user to manually pick a mode.
+
+Possible outputs: "bm25", "vector", "hybrid"
+Falls back to "hybrid" if the LLM returns anything unexpected.
+"""
+
 class RetrievalRouterAgent:
     VALID_MODES = {"BM25", "VECTOR", "HYBRID"}
 

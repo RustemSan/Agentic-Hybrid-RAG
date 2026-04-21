@@ -1,4 +1,18 @@
-# backend/app/services/retrieval_service.py
+"""
+retrieval_service.py — Unified interface for all retrieval backends.
+
+Acts as the single entry point for retrieval in the RAG pipeline.
+Callers (RAGService, API router) don't need to know which backend
+is being used — they just call .search() with a mode string.
+
+Supported modes:
+  - bm25:   Elasticsearch keyword search
+  - vector: Qdrant semantic search (dense embeddings)
+  - hybrid: Reciprocal Rank Fusion over BM25 + vector results
+
+All three clients are initialized on startup and reused across requests.
+Input validation (query, mode, top_k) happens here before any backend is called.
+"""
 
 from __future__ import annotations
 

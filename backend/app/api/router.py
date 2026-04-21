@@ -1,3 +1,13 @@
+"""
+router.py — FastAPI endpoints for the RAG system.
+
+Exposes three groups of routes:
+  - /search         — raw document retrieval (no generation)
+  - /answer         — full RAG pipeline: retrieval + LLM answer generation
+  - /search/modes   — metadata about supported retrieval modes
+  - /search/health  — lightweight health check for retrieval backends
+"""
+
 from fastapi import APIRouter, Query, HTTPException
 from app.services.retrieval_service import RetrievalService
 from app.services.rag_service import RAGService
@@ -5,7 +15,10 @@ from app.core.config import settings
 
 
 router = APIRouter()
-# Initializing the client. It will perform the health check we defined earlier.
+
+# Both services are initialized once at module load time (not per-request)
+# RetrievalService connects to Elasticsearch and Qdrant
+# RAGService wraps retrieval + generation + agent
 retrieval_service = RetrievalService()
 rag_service = RAGService(retrieval_service=retrieval_service)
 
@@ -23,6 +36,14 @@ def search(
         description="Number of results to return"
     ),
 ):
+    """
+    Retrieve documents without generating an answer.
+
+    Useful for inspecting what the retrieval pipeline returns
+    before committing to full generation.
+
+    Returns a list of ranked documents with scores and metadata.
+    """
     try:
         results = retrieval_service.search(
             query=q,
@@ -42,9 +63,11 @@ def search(
         }
 
     except ValueError as e:
+        # Triggered by invalid mode, empty query, or bad top_k value
         raise HTTPException(status_code=400, detail=str(e))
 
     except RuntimeError as e:
+        # Triggered when Elasticsearch or Qdrant call fails
         raise HTTPException(status_code=500, detail=str(e))
 
     except Exception as e:
@@ -67,9 +90,30 @@ def answer(
         le=settings.MAX_TOP_K,
         description="Number of retrieved documents to use for generation"
     ),
-        use_agent: bool = Query(default=False),
-        use_rewriter: bool = Query(default=False),
+        use_agent: bool = Query(
+            default=False,
+            description="If true, Router Agent selects the retrieval mode automatically",
+        ),
+        use_rewriter: bool = Query(
+            default=False,
+            description="If true, Query Rewriter expands the query before retrieval",
+        ),
+
 ):
+    """
+        Full RAG pipeline: retrieve documents and generate a grounded answer.
+
+        Pipeline order when both agents are enabled:
+          1. Query Rewriter expands the query for better recall
+          2. Router Agent selects the best retrieval mode
+          3. Retrieval runs against the selected backend
+          4. LLM generates an answer grounded in the retrieved documents
+
+        If use_agent=False, the `mode` parameter is used directly.
+        If use_rewriter=False, the original query is passed to retrieval as-is.
+
+        Returns the generated answer, agent metadata, and the source documents used.
+        """
     try:
         result = rag_service.answer(
             query=q,
@@ -83,8 +127,8 @@ def answer(
             "status": "success",
             "meta": {
                 "query": result["query"],
-                "rewritten_query": result["rewritten_query"],
-                "mode": result["mode"],
+                "rewritten_query": result["rewritten_query"], # equals query if rewriter was off
+                "mode": result["mode"],  # actual mode used (may differ if agent was on)
                 "agent_used": result["agent_used"],
                 "rewriter_used": result["rewriter_used"],
                 "retrieved_count": result["retrieved_count"],
@@ -102,7 +146,7 @@ def answer(
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc()  # prints full stack trace to server console for debugging
         raise HTTPException(status_code=500, detail=f"Unexpected generation error: {str(e)}")
 
 
