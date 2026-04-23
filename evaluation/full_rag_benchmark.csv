@@ -1,0 +1,735 @@
+﻿Mode,Question,Latency (sec),Docs Retrieved,LLM Answer,Status
+BM25,Are tuples mutable or immutable in Python?,2.18,5,"The available documents are insufficient to state this explicitly.
+
+The retrieved context discusses tuples as fixed-position return values and compares tuple vs list performance, but it does not directly say whether Python tuples are mutable or immutable.",OK
+BM25,How does the Python interpreter work under the hood?,1.77,5,"The available documents are insufficient to answer how the Python interpreter works under the hood.
+
+The retrieved context is about:
+- VB.NET optional parameters and CLR attributes like `Optional` and `DefaultParameterValue`
+- Database prepared statements and parameter binding
+
+None of the provided documents describe Python interpreter internals.",OK
+BM25,Why do I get ModuleNotFoundError even though the module is installed?,2.99,5,"The available documents are insufficient to explain why you get `ModuleNotFoundError` even though a module is installed.
+
+From the retrieved context, the only relevant information is for **Perl/CPAN**, not Python:
+
+- To check installed Perl modules, use the Perl FAQ:
+  - `perldoc -q installed`
+  - See `perlfaq3`
+- It mentions using:
+  - `ExtUtils::Installed`
+  - `File::Find`
+
+So if your issue is actually about **Perl modules not being found**, the retrieved documents only support verifying what is installed, not diagnosing why a module cannot be loaded.",OK
+BM25,What is the best way to parse a string in Python?,3.92,5,"The available documents are insufficient to answer “the best way to parse a string in Python” in general.
+
+What the retrieved context does support:
+
+- For parsing varied text formats, one answer says:
+  - manual string searching is most flexible but becomes painful as complexity grows,
+  - regex are a middle ground and are “probably your best bet,”
+  - Lex/Yacc is better suited to very complicated, predictable syntaxes,
+  - if there are multiple detectable formats, a plugin-style system can choose different parsing strategies.
+
+- For Python command-line argument parsing specifically:
+  - `argparse` is recommended for Python 2.7+,
+  - `optparse` is suggested only for older Python versions,
+  - `optparse` is preferred over `getopt` in that context.
+
+So, based only on the documents:
+
+- If you mean general text/string parsing: regex are probably the best bet, with manual parsing for simple cases and parser generators only for very complex, predictable syntax.
+- If you mean Python command-line argument strings: use `argparse` for Python 2.7 and above.",OK
+BM25,How to properly open and read a binary file in Python?,3.04,5,"Use `open()`, not `file()`.
+
+From the available documents:
+
+- “You should always use `open()`.”
+- It is preferable to use `open()` instead of invoking the `file` constructor directly.
+- `file` is more suited to type testing, e.g. `isinstance(f, file)`.
+- `file()` was removed in Python 3.0.
+
+The retrieved documents do **not** provide details about the specific mode string for binary reading or examples of reading binary contents, so the available documents are insufficient to say more about the exact binary-read syntax.",OK
+BM25,Which library should I use to execute SQL scripts in Python?,1.98,5,"The available documents are insufficient to answer which library to use to execute SQL scripts in Python.
+
+The retrieved context only discusses:
+- generating RSS in Common Lisp using an XML library like `xml-emitter`
+- using `window.onload` in JavaScript
+
+There is no information about Python SQL libraries or executing SQL scripts.",OK
+BM25,What is the difference between deep copy and shallow copy?,3.46,5,"From the provided context:
+
+- A **deep copy** creates an object graph where **everything is a brand new reference**, so the original object and the copy **share no references**.
+- The context does **not define shallow copy explicitly**.
+
+It also gives one way to make a deep copy in Java: **serialize the object and then deserialize it**, which “ensures everything is a brand new reference.” Caveats mentioned:
+- It may fail for classes that override serialization behavior, such as **singletons**.
+- It only works if the classes are **Serializable**.
+
+So, based only on the available documents, the difference is that **deep copy avoids shared references**, while the available documents are **insufficient to precisely define shallow copy**.",OK
+BM25,How do I sort a list of dictionaries by a specific key value?,3.73,5,"Use Python’s `sorted()` with the `key=` parameter.
+
+```python
+newlist = sorted(list_to_be_sorted, key=lambda d: d['name'])
+```
+
+Example:
+
+```python
+list_to_be_sorted = [
+    {'name': 'Homer', 'age': 39},
+    {'name': 'Bart', 'age': 10}
+]
+
+newlist = sorted(list_to_be_sorted, key=lambda d: d['name'])
+# [{'name': 'Bart', 'age': 10}, {'name': 'Homer', 'age': 39}]
+```
+
+Alternatively, use `operator.itemgetter`:
+
+```python
+from operator import itemgetter
+
+newlist = sorted(list_to_be_sorted, key=itemgetter('name'))
+```
+
+For descending order, add `reverse=True`:
+
+```python
+newlist = sorted(list_to_be_sorted, key=itemgetter('name'), reverse=True)
+```",OK
+BM25,What is the Global Interpreter Lock (GIL) and how does it affect multithreading?,3.85,5,"The Global Interpreter Lock (GIL), in implementations like CPython, is a lock that protects the interpreter internally.
+
+Effect on multithreading:
+- It does **not** mean your threaded code is automatically safe.
+- If threads **share state**, you still need your own synchronization such as locks.
+- The reason is that your code can be interrupted between steps of a multi-step update.
+
+Example from the context:
+- One thread reads `shared_balance`
+- Modifies it
+- Writes it back
+
+Another thread can run between the read and write, causing a **lost update**. The result can be an incorrect or effectively random final value.
+
+So, the GIL affects multithreading by protecting the interpreter itself, but it does **not** prevent race conditions in your application logic. Shared read-modify-write sections still need locking or another consistency mechanism.",OK
+BM25,How to write a custom decorator that takes arguments?,3.34,5,"The available documents are insufficient to answer the general question “How to write a custom decorator that takes arguments?”
+
+The only relevant Python material in the retrieved context is about converting a parent class method into a `classmethod` in a child class:
+
+```python
+def convert_to_classmethod(method):
+    return classmethod(method.im_func)
+
+class bar(foo):
+    meth1 = convert_to_classmethod(foo.meth1)
+```
+
+This works because, per the retrieved document, `foo.meth1` is already a method object, so you must access the underlying function via `method.im_func` before wrapping it with `classmethod`.
+
+However, the retrieved documents do not provide an example or explanation of a custom decorator factory that itself takes arguments.",OK
+BM25,What is the exact difference between __new__ and __init__ methods?,2.29,5,"The available documents are insufficient to answer this question.
+
+The retrieved context only discusses:
+- `|` vs `||` (short-circuit vs non-short-circuit operators in C#/PHP)
+- `::` vs `.` in Ruby
+
+It does not contain any information about Python `__new__` and `__init__`, so I cannot provide a grounded answer based only on the provided documents.",OK
+BM25,How to read a massive CSV file in Pandas without running out of RAM?,2.17,5,"The available documents are insufficient to answer how to read a massive CSV file in Pandas without running out of RAM.
+
+The retrieved context is about reading image metadata without loading entire image files, using file headers / magic bytes. It does not contain any Pandas or CSV-specific guidance.",OK
+BM25,"What do *args and **kwargs mean, and when should I use them?",1.94,5,"The available documents are insufficient to answer this question.
+
+The retrieved context only discusses:
+- C++ smart pointers (`std::unique_ptr`, `std::shared_ptr`, `std::weak_ptr`)
+- Java object immutability and cloning in graph structures
+
+It does not contain information about `*args` or `**kwargs`, what they mean, or when to use them.",OK
+BM25,How to safely evaluate a string representation of a dictionary without using eval()?,2.21,5,"The available documents are insufficient to answer how to safely evaluate a string representation of a dictionary without using `eval()`.
+
+The retrieved context only discusses:
+- inserting ASCII/Unicode characters in C# strings, and
+- dynamically calling a function in ColdFusion without `Evaluate()`.
+
+It does not contain any information about safely parsing or evaluating a dictionary-like string.",OK
+BM25,How can I catch multiple specific exceptions in a single try-except block?,4.32,5,"In C++, you can catch multiple exception types in a single handler only by using:
+
+```cpp
+catch (...) {
+    // Handle exceptions not covered.
+}
+```
+
+This catches all exception types.
+
+However, the retrieved documents emphasize that it is usually better to catch specific exception types you can actually recover from, rather than catching everything. `catch(...)` may also catch serious system-level exceptions, and swallowing those and continuing can cause further problems. If you use `catch(...)`, a safer pattern is to log useful local state and then re-throw.
+
+For divide-by-zero exceptions, the available documents are insufficient to give a precise answer beyond noting that `catch(...)` catches exceptions generally.",OK
+VECTOR,Are tuples mutable or immutable in Python?,2.79,5,"Tuples are immutable in Python.
+
+From the retrieved context:
+- Tuples and lists differ partly in that tuples are not meant to be modified, while lists are used for varying collections.
+- Tuples are commonly used as small grouped records of related data.
+- The performance example also reflects this distinction by showing tuples as fixed constants.
+
+So, in short:
+- tuple: immutable
+- list: mutable",OK
+VECTOR,How does the Python interpreter work under the hood?,4.84,5,"From the available documents, only a limited under-the-hood picture is supported:
+
+- Python does not execute source directly all the time. According to the retrieved context, the first thing Python does when it sees source code is compile it into a bytecode representation.
+- That bytecode is what `.pyc` files contain.
+- Then the Python runtime executes the bytecode without referring to the original source.
+- The context also notes that the boundary between “interpreted” and “compiled” is fuzzy for this reason.
+
+Related implementation details supported by the documents:
+
+- Some functionality may be implemented in the language of the runtime itself for performance, e.g. C in Python’s case.
+- Higher-level library code can also be implemented in pure Python when there is no benefit to using lower-level code.
+- The context mentions that a JIT could further optimize execution, and gives IronPython as an example of compiling Python to .NET bytecode and then relying on the .NET JIT.
+
+If you want a deeper explanation of the Python interpreter internals—such as parsing, AST generation, bytecode dispatch, stack frames, object model, memory management, or the eval loop—the available documents are insufficient.",OK
+VECTOR,Why do I get ModuleNotFoundError even though the module is installed?,6.38,5,"Based on the retrieved documents, a `ModuleNotFoundError`/“No module named …” can still happen even if you believe the module is installed for a few reasons:
+
+1. **The module is not actually present where Python is looking**
+   - In Document 3, the error happened because the checked-out project was missing the `core` directory entirely. Re-downloading that folder fixed it.
+   - So one cause is that the package files are missing from the environment or project, even if you expected them to be there.
+
+2. **The dependency exists, but in a different location/version than the runtime is using**
+   - Document 3 notes that AppEngine bundled the appropriate Django version in `lib/django`, and that it could be installed from there with `python setup.py install`.
+   - This suggests the runtime may not be using the installed copy you expect, or the required dependency/version is not installed into the active environment.
+
+3. **The code is trying to load something by path/name incorrectly**
+   - Document 5 shows that if a module is just a file somewhere on disk, you may need to load it explicitly by full path using `importlib`, `SourceFileLoader`, or `imp`, rather than relying on normal import resolution.
+
+So, from the available documents, the practical checks are:
+
+- Verify the module/package files actually exist in the environment/project.
+- Verify the correct dependency/version is installed in the environment your program is running in.
+- If the module is only available as a file at an arbitrary filesystem path, import it explicitly by path.
+
+If you want a more general explanation of all possible causes of `ModuleNotFoundError`, the available documents are insufficient.",OK
+VECTOR,What is the best way to parse a string in Python?,5.05,5,"The available documents are insufficient to answer “the best way to parse a string in Python” in general.
+
+From the retrieved context, the closest Python-specific guidance is:
+
+- For comma-delimited text with quotes/escaping, use `shlex`:
+  ```python
+  import shlex
+  s = '''foo, bar, ""one, two"", three four'''
+  lexer = shlex.shlex(s, posix=True)
+  lexer.whitespace += ','
+  lexer.whitespace_split = True
+  result = list(lexer)
+  ```
+  This handles quoted fields and shell-style escaping.
+
+- For HTML, the context recommends `BeautifulSoup` as more robust than regex.
+
+There is also a non-Python document suggesting regex as a middle ground for varied text formats, but that is general advice, not Python-specific.
+
+So, based only on the provided documents: use `shlex` for quoted/comma-delimited string tokenization, and use a proper parser like `BeautifulSoup` for HTML. For a general string-parsing recommendation, the available documents are insufficient.",OK
+VECTOR,How to properly open and read a binary file in Python?,2.13,5,"The available documents are insufficient to answer this properly for Python file I/O.
+
+The only Python-related retrieved context is about bitwise operations on integers, not opening files. The file-reading examples provided are for C++ and Windows API, not Python.
+
+So, based only on the provided context, I cannot give a correct Python-specific answer for how to open and read a binary file.",OK
+VECTOR,Which library should I use to execute SQL scripts in Python?,4.0,5,"Based on the retrieved documents, for Python the recommended library is **SQLAlchemy**.
+
+Why:
+- It is described as a strong Python solution when SQL processing is central, and can be used in an **iBATIS-like manner** with SQL definitions and mappings between tables and Python classes.
+- It is also recommended as the more full-featured and powerful ORM option.
+- It includes associated features like **connection pooling**.
+
+If by “execute SQL scripts” you specifically mean running large `.sql` files with batch separators like `GO`, the available documents are **insufficient** to name a Python library for that exact use case. The only `GO`-aware library mentioned in the context is **SQL Server Management Objects (SMO)**, but that is from a **C# / SQL Server** example, not Python.",OK
+VECTOR,What is the difference between deep copy and shallow copy?,3.74,5,"A shallow copy copies the object itself, but nested referenced objects may still be shared.
+
+A deep copy creates a fresh object graph so the copy shares no references with the original. As one retrieved answer puts it, the goal is that “the original object and the cloned one share no reference.”
+
+From the provided context, deep copy is typically achieved by serializing and then deserializing the object, which “ensures everything is a brand new reference,” with caveats:
+- the classes must be serializable
+- some serialization mechanisms may not clone private members
+- special cases like singletons may override normal behavior
+
+So, in practical terms:
+- Shallow copy: outer object copied, inner references may still point to the same objects
+- Deep copy: outer object and all referenced objects are duplicated, so changes to the copy are not reflected in the original",OK
+VECTOR,How do I sort a list of dictionaries by a specific key value?,3.59,5,"In Python, use `sorted()` with the `key=` parameter to extract the dictionary value you want to sort by.
+
+Example:
+
+```python
+data = [{'name': 'Homer', 'age': 39}, {'name': 'Bart', 'age': 10}]
+result = sorted(data, key=lambda d: d['name'])
+```
+
+This gives:
+
+```python
+[{'name': 'Bart', 'age': 10}, {'name': 'Homer', 'age': 39}]
+```
+
+You can also use `operator.itemgetter`:
+
+```python
+from operator import itemgetter
+result = sorted(data, key=itemgetter('name'))
+```
+
+For descending order:
+
+```python
+result = sorted(data, key=itemgetter('name'), reverse=True)
+```",OK
+VECTOR,What is the Global Interpreter Lock (GIL) and how does it affect multithreading?,5.41,5,"The Global Interpreter Lock (GIL) is a lock in Python implementations such as CPython that allows only one thread to execute in the interpreter at a time.
+
+Effect on multithreading:
+- Only one Python thread can run at a time in the interpreter core.
+- CPU-bound threads are therefore effectively serialized: if two threads are doing computation, only one runs at any given moment.
+- This means Python threads do not take advantage of multi-core or multi-processor hardware for parallel execution in that model.
+- Threads are still useful for concurrent I/O: when one thread blocks on file, network, or similar input, another thread can run.
+
+Important limitation:
+- The GIL does not make your shared data automatically safe.
+- You still need locks when threads share mutable state, because your code can be interrupted between steps of a read-modify-write sequence, causing inconsistent updates or lost updates.
+- In other words, the GIL protects the interpreter internally, not the correctness of your application’s shared-state logic.",OK
+VECTOR,How to write a custom decorator that takes arguments?,4.23,5,"The available documents are insufficient to answer this directly for a general “custom decorator that takes arguments” pattern.
+
+From the retrieved context, the closest relevant Python example is this higher-order function pattern:
+
+```python
+def HTMLDecorator(obj):
+    def html():
+        sep = cgi.escape(repr(obj))
+        return sep.join(("" "", "" ""))
+    obj.html = html
+    return obj
+```
+
+This shows that in Python you can write a function that takes an argument (`obj`), defines an inner function (`html`) that closes over that argument, attaches it, and returns the modified object.
+
+Also, for forwarding keyword arguments, the retrieved context shows:
+
+```python
+methodB(""argvalue"", **kwargs)
+```
+
+So if your decorator-related code needs to pass keyword arguments through, use `**kwargs`.
+
+But the documents do not provide a direct example of the standard Python syntax for a decorator that itself takes arguments, so I can only say the available documents are insufficient for a complete answer.",OK
+VECTOR,What is the exact difference between __new__ and __init__ methods?,2.38,5,"The available documents are insufficient to answer the exact difference between `__new__` and `__init__`.
+
+From the retrieved context, only `__init__` is mentioned, and only as the constructor-like initializer that can validate arguments and raise exceptions during object creation. There is no information in the provided documents about `__new__`, so I cannot give a precise comparison without inventing facts outside the context.",OK
+VECTOR,How to read a massive CSV file in Pandas without running out of RAM?,3.46,5,"The available documents are insufficient to answer this specifically for **Pandas**.
+
+From the retrieved context, the only grounded guidance for handling very large files without exhausting memory is to **process data incrementally instead of loading it all at once**:
+
+- Read or copy the file **block by block / sequentially** rather than all at once ([Document 2]).
+- For large datasets, prefer **sequential processing** when possible ([Document 1], [Document 5]).
+- If random access is needed, one document suggests **memory-mapped I/O** in Java, but that is not Pandas-specific ([Document 5]).
+
+So, based only on the provided documents, the safe general recommendation is:
+
+- **Do not load the entire CSV into RAM at once.**
+- **Process it in smaller chunks / sequentially.**
+
+But the retrieved documents do **not** provide the Pandas-specific API or exact method to do this.",OK
+VECTOR,"What do *args and **kwargs mean, and when should I use them?",5.73,5,"In Python function definitions:
+
+- `*args` collects any extra positional arguments into a tuple.
+- `**kwargs` collects any extra keyword arguments into a dictionary.
+
+Examples from the context:
+
+```python
+def foo(*args):
+    for a in args:
+        print(a)
+```
+
+Calling `foo(1, 2, 3)` makes `args == (1, 2, 3)`.
+
+```python
+def bar(**kwargs):
+    for a in kwargs:
+        print(a, kwargs[a])
+```
+
+Calling `bar(name='one', age=27)` makes `kwargs == {'name': 'one', 'age': 27}`.
+
+You can combine them with regular parameters:
+
+```python
+def foo(kind, *args, bar=None, **kwargs):
+    print(kind, args, bar, kwargs)
+```
+
+Example:
+
+```python
+foo(123, 'a', 'b', apple='red')
+# kind = 123
+# args = ('a', 'b')
+# bar = None
+# kwargs = {'apple': 'red'}
+```
+
+When to use them:
+- Use `*args` when a function should accept a variable number of positional arguments.
+- Use `**kwargs` when a function should accept a variable number of named/keyword arguments.
+- Use both when you need some fixed parameters plus flexible extra arguments.
+
+They are also used for unpacking when calling functions:
+
+```python
+foo(*baz)     # unpack a list/iterable into positional arguments
+foo(**obj)    # unpack a dict into keyword arguments
+```
+
+And if you want to pass `kwargs` from one function to another, use `**kwargs` in the call:
+
+```python
+def methodA(arg, **kwargs):
+    methodB(""argvalue"", **kwargs)
+```
+
+Not:
+
+```python
+methodB(""argvalue"", kwargs)
+```
+
+because that passes the dictionary as a positional argument rather than as",OK
+VECTOR,How to safely evaluate a string representation of a dictionary without using eval()?,4.01,5,"Use a parser instead of `eval()`.
+
+From the provided context, the safe pattern is analogous to JSON: parse the string with a dedicated parser rather than evaluating code. For JSON strings, use:
+
+```javascript
+JSON.parse(jsonString)
+```
+
+The documents also explicitly warn that so-called “safe eval” approaches are not reliably safe, and suggest writing/parsing via an AST or using a proper parser instead of `eval()`.
+
+If your string is a Python dictionary literal specifically, the available documents are insufficient to name a Python built-in for that exact case. But based on the retrieved context, the correct general guidance is:
+
+- do not use `eval()`
+- use a proper parser for the data format
+- if needed, parse to an AST and evaluate only allowed constructs rather than executing arbitrary code",OK
+VECTOR,How can I catch multiple specific exceptions in a single try-except block?,4.1,5,"The available documents are insufficient to show a language-specific syntax for catching multiple specific exceptions in a single `try`/`except` block.
+
+From the retrieved context, the closest relevant guidance is:
+
+- In C++, you can catch all exceptions with:
+  ```cpp
+  catch (...) {
+      // Handle exceptions not covered.
+  }
+  ```
+  But the document explicitly says it is better to catch specific exception types you can actually recover from, rather than all possible exceptions.
+
+- In .NET/C#, examples shown use separate `catch (Exception e)` blocks around a `try`, including when combined with `using`, but the retrieved documents do not provide a pattern for multiple specific exception types in one catch clause.
+
+So, based only on the provided context:
+- Use a normal `try` with `catch` blocks.
+- Prefer catching specific exceptions you can handle.
+- The documents do not provide enough information to show how to combine multiple specific exception types into a single catch clause.",OK
+HYBRID,Are tuples mutable or immutable in Python?,2.28,5,"Tuples are **immutable** in Python.
+
+From the retrieved context:
+- Document 3 explicitly says: “Since they're immutable, they can be used as keys for a dictionary (lists can't).”
+- Document 5 contrasts tuples with lists and notes the distinction in terms of usage, with tuples representing fixed grouped data.
+
+So, **tuples are immutable; lists are mutable**.",OK
+HYBRID,How does the Python interpreter work under the hood?,5.18,5,"Based on the available documents, the Python interpreter works under the hood like this:
+
+- **Python source is first compiled to bytecode**.
+  - The retrieved context states: “the first thing Python does when it sees source code is compile it into a bytecode representation.”
+  - This bytecode is what **`.pyc` files** contain.
+
+- **The Python runtime then executes that bytecode**.
+  - According to the context, after compilation, “the python runtime executes the bytecode without referring to the original source.”
+
+- **This means Python is not described here as a purely source-interpreting language**.
+  - The context contrasts this with a “purely interpreted language,” which would continuously refer to the source code during execution.
+
+- **Some functionality may be implemented in C for performance**.
+  - The documents say that certain modules or functions are implemented in the compiled language behind the runtime “to maximise the performance.”
+  - Example given: the **regular expression parser** is written in **C** rather than native Python.
+  - Other modules can be implemented in **pure Python** when there is no performance benefit to using C.
+
+- **Alternative runtimes can compile differently**.
+  - The context mentions **IronPython**, which “compiles Python directly to .NET bytecode,” and then that bytecode is run by the .NET system, including its JIT.
+
+If you want details such as the internal evaluation loop, stack frames, object model, memory management, or CPython-specific implementation internals, the available documents are insufficient.",OK
+HYBRID,Why do I get ModuleNotFoundError even though the module is installed?,3.89,5,"The available documents are insufficient to answer this generally.
+
+From the retrieved context, the closest relevant case is about a missing .NET assembly: even if your application depends on a DLL, you can still get a runtime error if the assembly is not actually available to be loaded, or if the expected version is missing. The suggested approach there is to explicitly try loading the assembly and catch load failures, for example with `Assembly.Load(...)` and handling `FileNotFoundException`.
+
+So, based only on the provided documents, one concrete reason is:
+
+- The module/assembly may be installed somewhere, but not available to the runtime your application is using.
+- The specific expected version may be missing.
+
+If you want, I can help further, but the retrieved documents do not provide enough information about your language/runtime to explain `ModuleNotFoundError` more precisely.",OK
+HYBRID,What is the best way to parse a string in Python?,4.83,5,"The available documents are insufficient to answer “the best way to parse a string in Python” in general.
+
+From the retrieved context, the only Python-specific string-parsing guidance is:
+
+- For simple comma-delimited parsing with quoted fields, `shlex` can be used:
+  ```python
+  import shlex
+  my_splitter = shlex.shlex('''foo, bar, ""one, two"", three four''', posix=True)
+  my_splitter.whitespace += ','
+  my_splitter.whitespace_split = True
+  list(my_splitter)
+  ```
+  This is specifically suggested for handling quoted/escaped fields.
+
+The other relevant parsing advice in the documents is not Python-general string parsing:
+
+- `argparse`/`optparse` are for command-line argument parsing, not arbitrary strings.
+- One document discusses general parsing strategies and says regex are often a good middle ground, but that answer is for C#, not Python.
+
+So, based only on the provided documents:
+
+- Use `shlex` if your string is shell-like or comma-delimited with quotes/escaping.
+- Otherwise, the available documents are insufficient to recommend a general “best” Python string parsing approach.",OK
+HYBRID,How to properly open and read a binary file in Python?,3.3,5,"Use `open()`, not `file()`.
+
+To read a binary file in Python, the available documents are only partially sufficient: they establish that `open()` is the preferred API for opening files, but they do not provide a direct binary-reading example in Python.
+
+Grounded answer from the documents:
+- Prefer `open()` when opening a file.
+- `file()` should not be used; it is more suited to type testing and was removed in Python 3.0.
+
+Example pattern consistent with that guidance:
+```python
+f = open(""path/to/file"")
+```
+
+However, the retrieved documents are insufficient to confirm the exact Python mode string or the proper binary read calls for reading raw bytes.",OK
+HYBRID,Which library should I use to execute SQL scripts in Python?,3.2,5,"The available documents are insufficient to answer this precisely for Python SQL script execution.
+
+From the retrieved context, the only Python-specific database libraries mentioned are:
+
+- **pyodbc** for fetching data from a database
+- **SQLAlchemy** and **Django ORM** for ORM/database access
+- A mention that **SQLAlchemy** can be used in an iBATIS-like manner
+
+However, none of the provided documents specifically recommends a Python library for **executing SQL scripts**. The only direct answer about executing SQL scripts refers to **C# / SQL Server** and recommends **SQL Server Management Objects (SMO)**, which is not a Python library.",OK
+HYBRID,What is the difference between deep copy and shallow copy?,4.93,5,"A shallow copy copies the object itself, but referenced objects may still be shared.
+
+A deep copy creates a completely new object graph so that the original and the copy share no references.
+
+From the retrieved documents:
+- A deep copy is described as ensuring “everything is a brand new reference” by serializing and then deserializing the object.
+- The goal is that changes to the cloned object are not reflected in the original object.
+
+So the practical difference is:
+- **Shallow copy:** some internal references can still point to the same underlying objects.
+- **Deep copy:** all nested referenced objects are also copied, so modifying the copy does not affect the original.
+
+The available documents only explicitly define deep copy and its “share no reference” property; they do not provide a formal shallow-copy implementation example.",OK
+HYBRID,How do I sort a list of dictionaries by a specific key value?,3.02,5,"In Python, use `sorted()` with the `key=` parameter:
+
+```python
+newlist = sorted(list_to_be_sorted, key=lambda d: d['name'])
+```
+
+Example:
+
+```python
+data = [{'name': 'Homer', 'age': 39}, {'name': 'Bart', 'age': 10}]
+newlist = sorted(data, key=lambda d: d['name'])
+# [{'name': 'Bart', 'age': 10}, {'name': 'Homer', 'age': 39}]
+```
+
+Alternatively, use `operator.itemgetter`:
+
+```python
+from operator import itemgetter
+newlist = sorted(list_to_be_sorted, key=itemgetter('name'))
+```
+
+For descending order, add `reverse=True`:
+
+```python
+newlist = sorted(list_to_be_sorted, key=itemgetter('name'), reverse=True)
+```",OK
+HYBRID,What is the Global Interpreter Lock (GIL) and how does it affect multithreading?,7.71,5,"The Global Interpreter Lock (GIL) is a lock used by some language implementations to ensure that only one interpreter-managed thread executes at a time.
+
+From the provided context:
+
+- In CPython, the GIL “only protects the interpreter internally.”
+- In Ruby YARV, the GIL ensures “only one Ruby Thread can actually be scheduled at any one time.”
+
+Effect on multithreading:
+
+- Threads may exist, but they are not necessarily executed in parallel within the interpreter-managed code.
+- This means multithreaded code does not automatically become safe just because a GIL exists.
+
+Important consequence:
+
+- You still need synchronization, such as locks, when threads share mutable state.
+- The GIL does not prevent race conditions in your application logic.
+
+Example from the context:
+A thread can be interrupted between:
+1. reading shared state,
+2. modifying it,
+3. writing it back.
+
+That can cause lost updates and inconsistent results, even with the GIL.
+
+So, in short:
+- The GIL serializes execution of interpreter-level threads.
+- It can limit true parallel execution of those threads.
+- It does not remove the need for locks around shared data.",OK
+HYBRID,How to write a custom decorator that takes arguments?,5.9,5,"The available documents are insufficient to answer generally how to write a custom decorator that takes arguments.
+
+From the retrieved context, the only directly relevant Python decorator-related example is converting a parent method to a `classmethod`:
+
+```python
+def convert_to_classmethod(method):
+    return classmethod(method.im_func)
+
+class bar(foo):
+    meth1 = convert_to_classmethod(foo.meth1)
+```
+
+This shows a custom wrapper function that takes one argument (`method`) and returns a decorated version using `classmethod(...)`.
+
+However, the provided documents do not include an example of a Python decorator factory, i.e. a decorator written in the usual `@decorator(arg1, arg2)` form. So I can only say:
+
+- A custom decorator-like helper can take arguments as normal function parameters.
+- In the provided example, `convert_to_classmethod(method)` accepts `method` and returns `classmethod(method.im_func)`.
+
+If you want the standard Python pattern for decorators that themselves take arguments, the available documents are insufficient.",OK
+HYBRID,What is the exact difference between __new__ and __init__ methods?,2.42,5,"The available documents are insufficient to answer the exact difference between `__new__` and `__init__`.
+
+The retrieved context includes Python material about:
+
+- old-style vs new-style classes,
+- adding methods to instances,
+- testing an `__init__()` method,
+
+but it does not describe `__new__` or compare it with `__init__`.",OK
+HYBRID,How to read a massive CSV file in Pandas without running out of RAM?,3.3,5,"The available documents are insufficient to answer this specifically for Pandas.
+
+From the retrieved context, the only relevant general technique for avoiding RAM exhaustion with very large files is to process data incrementally rather than loading the entire file at once. One document describes handling large files by opening the file and reading it block by block in a loop, instead of reading the whole file into memory at once.
+
+Grounded takeaway:
+- Do not load the entire massive CSV into memory at once.
+- Read/process it in smaller chunks or blocks sequentially.
+
+However, the provided documents do not contain any Pandas-specific method, API, or example for doing this.",OK
+HYBRID,"What do *args and **kwargs mean, and when should I use them?",6.77,5,"In Python:
+
+- `*args` collects extra positional arguments into a tuple.
+- `**kwargs` collects extra keyword arguments into a dictionary.
+
+Example:
+
+```python
+def foo(*args):
+    for a in args:
+        print(a)
+```
+
+```python
+foo(1)
+foo(1, 2, 3)
+```
+
+Here, `args` is a tuple of all positional arguments.
+
+For keyword arguments:
+
+```python
+def bar(**kwargs):
+    for a in kwargs:
+        print(a, kwargs[a])
+```
+
+```python
+bar(name='one', age=27)
+```
+
+Here, `kwargs` is a dictionary of all keyword arguments.
+
+You can combine them with normal parameters:
+
+```python
+def foo(kind, *args, bar=None, **kwargs):
+    print(kind, args, bar, kwargs)
+```
+
+Example call:
+
+```python
+foo(123, 'a', 'b', apple='red')
+```
+
+This gives:
+- `kind = 123`
+- `args = ('a', 'b')`
+- `bar = None`
+- `kwargs = {'apple': 'red'}`
+
+When to use them:
+- Use `*args` when a function should accept a variable number of positional arguments.
+- Use `**kwargs` when a function should accept a variable number of keyword arguments.
+- Use both when you want a mix of fixed parameters and flexible extra arguments.
+
+They are also used for unpacking when calling functions:
+
+```python
+foo(*baz)
+foo(100, **obj)
+```
+
+And to forward keyword arguments from one function to another:
+
+```python
+def methodA(arg, **kwargs):
+    methodB(""argvalue"", **kwargs)
+```
+
+Also, in Python 3, a bare `*` in a function signature means parameters after it must be passed by keyword:
+
+```python
+def func(arg1, arg2, arg3, *, kwarg1,",OK
+HYBRID,How to safely evaluate a string representation of a dictionary without using eval()?,2.3,5,"The available documents are insufficient to answer this safely and correctly.
+
+None of the retrieved context discusses evaluating a string representation of a dictionary or safe alternatives to `eval()`. The only Python-related document is about returning multiple values from a function, which is unrelated.",OK
+HYBRID,How can I catch multiple specific exceptions in a single try-except block?,6.29,5,"In C#, use multiple `catch` clauses on the same `try` block, one per exception type you want to handle specifically.
+
+Example pattern:
+
+```csharp
+try
+{
+    // code
+}
+catch (SpecificException1 ex)
+{
+    // handle SpecificException1
+}
+catch (SpecificException2 ex)
+{
+    // handle SpecificException2
+}
+catch (Exception ex)
+{
+    // fallback for other exceptions
+}
+```
+
+From the retrieved context, `catch (Exception)` catches exceptions derived from `Exception`, but debugger behavior can make it look like an exception is “unhandled by user code” even when it will ultimately be caught. In Visual Studio, this can be affected by settings such as:
+
+- “Enable Just My Code (Managed only)”
+- “User-unhandled” for Common Language Runtime exceptions
+
+So if your goal is to catch several specific exceptions in one `try`/`catch` structure, the available documents support using multiple `catch` blocks, ordered from most specific to most general.
+
+If you meant catching multiple exception types in a single `catch (...)`-style clause, the available documents are insufficient to confirm syntax for that in C#.",OK

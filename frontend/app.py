@@ -29,7 +29,7 @@ st.set_page_config(
 )
 
 # Read backend URL from environment so the same image works in Docker or locally
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:8000")
 
 # ---------------------------------------------------------------------------
 # API call functions

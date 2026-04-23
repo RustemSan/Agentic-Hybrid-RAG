@@ -1,7 +1,6 @@
 services:
   backend:
     build:
-      context: ..
       dockerfile: backend/Dockerfile
     container_name: so-backend
     ports:
@@ -14,6 +13,7 @@ services:
       - QDRANT_COLLECTION=stackoverflow_vector
       - EMBEDDING_MODEL_NAME=BAAI/bge-small-en-v1.5
       - PYTHONPATH=/app
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - elasticsearch
       - qdrant
@@ -37,7 +37,6 @@ services:
 
   ingest:
     build:
-      context: ..
       dockerfile: backend/Dockerfile
     container_name: so-ingest
     environment:
@@ -48,6 +47,7 @@ services:
       - QDRANT_COLLECTION=stackoverflow_vector
       - EMBEDDING_MODEL_NAME=BAAI/bge-small-en-v1.5
       - PYTHONPATH=/app
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     command: python scripts/ingest_data.py
     depends_on:
       - elasticsearch
@@ -57,7 +57,7 @@ services:
 
   frontend:
     build:
-      context: ../frontend
+      context: frontend
       dockerfile: Dockerfile
     container_name: so-frontend
     ports:
